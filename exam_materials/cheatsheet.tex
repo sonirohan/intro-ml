@@ -1,0 +1,119 @@
+\documentclass[10pt]{article}
+\usepackage[margin=0.2in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{multicol}
+\usepackage{enumitem}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0pt}
+\setlength{\columnsep}{0.12in}
+\setlength{\multicolsep}{0pt}
+\setlist{nosep,leftmargin=*,topsep=0pt,itemsep=0pt,parsep=0pt,partopsep=0pt}
+\makeatletter
+\renewcommand{\section}{\@startsection{section}{1}{0pt}{1pt}{0.5pt}{\bfseries\large\underline}}
+\renewcommand{\subsection}{\@startsection{subsection}{2}{0pt}{1pt}{0pt}{\bfseries\footnotesize}}
+\makeatother
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\norm}[1]{\lVert #1\rVert}
+\newcommand{\ip}[2]{#1^\top #2}
+\newcommand{\sgn}{\operatorname{sign}}
+\newcommand{\sig}{\sigma}
+\newcommand{\argmin}{\operatorname*{arg\,min}}
+\newcommand{\argmax}{\operatorname*{arg\,max}}
+\newcommand{\topic}[1]{\par\vspace{1pt}\noindent{\bfseries\footnotesize #1.}\quad}
+
+\begin{document}
+\fontsize{7.4}{8.2}\selectfont
+\vspace{-9pt}
+
+\begin{multicols*}{3}
+
+\section*{Notation}
+\topic{Data} Training set \(\{(x_i,y_i)\}_{i=1}^N\), \(x_i\in\R^d\). Design \(X\in\R^{N\times d}\) has row \(x_i^\top\); append \(1\) to \(x_i\) to absorb bias \(b\) into \(w\). Linear score \(s_i=\ip{w}{x_i}+b\). For \(y_i\in\{-1,+1\}\), margin \(m_i=y_i s_i\).
+\topic{Prediction} Regression \(\hat y_i=\ip{\theta}{x_i}\). Linear classifier \(h(x)=\sgn(\ip{w}{x}+b)\): \(\hat y=+1\) if \(s>0\), else \(-1\). Boundary \(s=0\).
+
+\section*{Regression}
+\topic{MSE loss} For \(h_\theta(x_i)=\ip{\theta}{x_i}\),
+\[
+J(\theta)=\frac1N\sum_{i=1}^N(\ip{\theta}{x_i}-y_i)^2
+=\frac1N\norm{X\theta-y}_2^2 .
+\]
+\(\nabla_\theta J=\frac2N X^\top(X\theta-y)\). Set \(\nabla J=0\): \(X^\top X\theta=X^\top y\), so \(\theta^*=(X^\top X)^{-1}X^\top y\) if invertible.
+\topic{Linear regression view} \(\hat y_i=\ip{w}{x_i}\), \(L_w(x,y)=\frac1N\sum_i(y_i-\hat y_i)^2\). In covariance notation, \(w^*=R_x^{-1}R_{xy}\) when \(R_x=X^\top X\) (or scaled covariance/second-moment matrix) and \(R_{xy}=X^\top y\).
+\topic{Ridge / \(L_2\)} \(J_\lambda=\frac1N\norm{X\theta-y}^2+\lambda\norm{\theta}_2^2\). Solution \(\theta^*=(X^\top X+N\lambda I)^{-1}X^\top y\). If no \(1/N\), use \(X^\top X+\lambda I\). Shrinks weights continuously, lowers variance, improves conditioning, usually keeps all features.
+\topic{Lasso / \(L_1\)} \(J_\lambda=\frac1N\norm{X\theta-y}^2+\lambda\norm{\theta}_1\), \(\norm{\theta}_1=\sum_j|\theta_j|\). Promotes sparse weights/feature selection. Not differentiable at \(0\); subgradient of \(|\theta_j|\) is \(\sgn(\theta_j)\) if nonzero and any value in \([-1,1]\) at \(0\). Contrast: ridge shrinks all weights smoothly, lasso can set weights exactly \(0\).
+\topic{Covariance matrix} For centered data rows \(x_i-\mu\), sample covariance \(\Sigma=\frac1{N-1}\sum_i(x_i-\mu)(x_i-\mu)^\top=\frac1{N-1}X_c^\top X_c\). Entry \(\Sigma_{jk}\) measures how features \(j,k\) vary together; correlation normalizes by stds: \(\rho_{jk}=\Sigma_{jk}/(\sigma_j\sigma_k)\).
+
+\section*{Logistic / MLE}
+\topic{Sigmoid model} \(h_w(x)=\sig(\ip{w}{x}+b)\), \(\sig(z)=1/(1+e^{-z})\). Identities: \(1-\sig(z)=\sig(-z)\), \(\sig'(z)=\sig(z)(1-\sig(z))\). Logistic boundary \(h=0.5\Leftrightarrow \ip{w}{x}+b=0\).
+\topic{Bernoulli likelihood} For \(y_i\in\{0,1\}\), \(p(y_i|x_i;w)=h_i^{y_i}(1-h_i)^{1-y_i}\). Log-likelihood \(\ell(w)=\sum_i[y_i\log h_i+(1-y_i)\log(1-h_i)]\). MLE \(w^*=\argmax_w\ell(w)=\argmin_w[-\ell(w)]\).
+\topic{BCE / negative log-likelihood} \(J_{BCE}=-\frac1N\sum_i[y_i\log h_i+(1-y_i)\log(1-h_i)]\). Gradient \(\nabla_w J_{BCE}=\frac1N\sum_i(h_i-y_i)x_i=\frac1N X^\top(h-y)\). CE is convex for logistic regression in \(w\).
+\topic{Squared error argmin} Objective \(\min_\theta J(\theta)\) with \(J(\theta)=\frac1N\sum_i(h_\theta(x_i)-y_i)^2\).
+
+\section*{Linear Classifiers}
+\topic{Bias trick} Replace \(x\) by \(\tilde x=[x;1]\), \(w\) by \(\tilde w=[w;b]\), so \(s=\ip{\tilde w}{\tilde x}\).
+\topic{Margin constraint} \(y_i(\ip{w}{x_i}+b)\ge1\). Equivalently for SVM labels: \(w^\top x_i+b\ge1\) if \(y_i=+1\), and \(w^\top x_i+b\le-1\) if \(y_i=-1\).
+\topic{Perceptron} If \(y_i\ip{w_k}{x_i}\le0\), update \(w_{k+1}=w_k+\eta y_i x_i\) and \(b_{k+1}=b_k+\eta y_i\); otherwise no update. Repeat until all classified correctly or stop. Margin variant keeps updating until \(y_i(\ip{w}{x_i}+b)\ge1\).
+
+\section*{SVMs}
+\topic{What SVM does} Finds a separating hyperplane with maximum margin, usually by minimizing \(\norm{w}\) while satisfying class constraints. Decision rule remains \(\sgn(\ip{w}{x}+b)\).
+\topic{Hard-margin primal} \(\min_{w,b}\frac12\norm{w}^2\) subject to \(y_i(\ip{w}{x_i}+b)\ge1\). Margin hyperplanes: \(\ip{w}{x}+b=\pm1\). Geometric distance from boundary to either margin plane is \(1/\norm{w}\); total margin width is \(2/\norm{w}\). Longer \(w\Rightarrow\) smaller margin.
+\topic{Soft margin / hinge} \(J(w,b)=\sum_i\max(0,1-y_i(\ip{w}{x_i}+b))+\frac{\lambda}{2}\norm{w}^2\). Points with \(m_i<1\) contribute; \(m_i\ge1\) are inactive. Equivalent slack view: allow violations \(\xi_i\ge0\), \(y_is_i\ge1-\xi_i\), penalize \(\sum_i\xi_i\). Support vectors lie on/inside the margin and determine the boundary.
+
+\section*{Optimization}
+\topic{Gradient descent} \(w_{k+1}=w_k-\eta_k\nabla f(w_k)\). Stop when \(|f(w_{k+1})-f(w_k)|<\varepsilon\), \(\norm{\nabla f(w_k)}\) small, or max iterations reached.
+\topic{Stochastic gradient descent} GD uses all \(N\) examples per update: \(\nabla J=\frac1N\sum_i\nabla\ell_i\). SGD uses one example: \(w\leftarrow w-\eta\nabla\ell_i(w)\). Mini-batch uses \(B\): \(w\leftarrow w-\eta\frac1{|B|}\sum_{i\in B}\nabla\ell_i(w)\). SGD is cheaper/noisier, often faster on large data; full GD is smoother but each step costs more.
+\topic{Hessian} \(H_{ij}=\partial^2 f/\partial w_i\partial w_j\). Quadratic approximation \(f(w+\delta)\approx f(w)+\nabla f^\top\delta+\frac12\delta^\top H\delta\). At an interior minimum, \(\nabla f=0\); positive definite Hessian is the multi-D analog of second derivative \(>0\).
+\topic{Convexity} If \(H(w)\succeq0\) for all \(w\), \(f\) is convex; then any local minimum is global. If \(H\succ0\), locally strictly convex.
+
+\section*{Lagrangian / Dual}
+\topic{Primal form} For minimize \(f_0(x)\) s.t. \(g_i(x)\le0\), \(h_j(x)=0\), Lagrangian
+\[
+\begin{gathered}
+L(x,\alpha,\beta)=f_0(x)+\sum_i\alpha_i g_i(x)+\sum_j\beta_j h_j(x),\\[-1pt]
+\alpha_i\ge0.
+\end{gathered}
+\]
+Each constraint gets a multiplier.
+\topic{Dual function} \(q(\alpha,\beta)=\inf_x L(x,\alpha,\beta)\). Dual problem: \(d^*=\max_{\alpha,\beta:\alpha\ge0}q(\alpha,\beta)\). Weak duality: \(d^*\le p^*\) for minimization primal optimum \(p^*\). Strong duality can hold under convexity/regularity conditions.
+\topic{KKT memory} Feasibility, \(\alpha_i\ge0\), stationarity \(\nabla_x L=0\), complementary slackness \(\alpha_i g_i(x)=0\).
+
+\section*{Validation}
+\topic{Train / validation / test} Train fits weights; validation chooses hyperparameters/model class; test is untouched until final evaluation. Reusing test for choices leaks information.
+\topic{K-fold CV} Split training data into \(K\) folds. For each candidate, train on \(K-1\) folds and validate on the held-out fold; average validation scores: \(\mathrm{CV}(\lambda)=\frac1K\sum_{k=1}^K E_k(\lambda)\). Compared with one split, CV uses data more efficiently and gives a stabler generalization estimate, but costs about \(K\) trainings per candidate.
+\topic{Model selection} Pick hyperparameters by validation/CV, then retrain on all training data with the chosen setting. Report final test performance once. High train error and high val error suggests underfitting; low train error and high val error suggests overfitting.
+
+\section*{K-Means}
+\topic{Objective} Given \(K\) clusters with centroids \(\mu_1,\ldots,\mu_K\) and assignments \(c_i\), minimize within-cluster sum of squares \(J=\sum_{i=1}^N\norm{x_i-\mu_{c_i}}_2^2\).
+\topic{Algorithm} Initialize centroids. Assignment step: \(c_i=\argmin_k\norm{x_i-\mu_k}^2\). Update step: \(\mu_k=\frac1{|C_k|}\sum_{i:c_i=k}x_i\). Repeat until assignments/objective stop changing. Sensitive to initialization, scaling, and choice of \(K\); objective decreases each iteration but can reach local minima.
+\topic{Interpretation} K-means assumes compact roughly spherical clusters under Euclidean distance. Standardize features first if scales differ. Empty cluster fix: reinitialize that centroid or split a large cluster.
+
+\section*{Kernels}
+\topic{Gram matrix} Kernel \(K(x,z)=\phi(x)^\top\phi(z)\). For data \(x_1,\ldots,x_N\), \(G_{ij}=K(x_i,x_j)\). This is the matrix of pairwise kernel values.
+\topic{Mercer / PSD test} A valid kernel gives a symmetric PSD Gram matrix for every finite dataset. PSD means \(a^\top G a\ge0\) for all coefficient vectors \(a\). Any negative eigenvalue disproves PSD. Since \(\det(G)=\prod_j\lambda_j\), a negative determinant proves mixed eigenvalue signs.
+\topic{Common kernels} Linear \(K(x,z)=x^\top z\). Polynomial \(K(x,z)=(x^\top z+c)^d\), \(c\ge0,d\in\mathbb{N}\). RBF \(K(x,z)=\exp(-\gamma\norm{x-z}^2)\), \(\gamma>0\).
+\topic{Kernel distance} \(\norm{\phi(x)-\phi(z)}^2=K(x,x)+K(z,z)-2K(x,z)\).
+\topic{Composition rules} If \(K_1,K_2\) valid: \(K_1+K_2\), \(cK_1\) for \(c>0\), \(K_1K_2\), \(f(x)K_1(x,z)f(z)\), integer powers \(K_1^m\), and \(\exp(K_1)\) are valid. Schur product theorem: elementwise product of PSD matrices is PSD, explaining product kernels.
+
+\section*{Vector Calculus}
+\topic{Shapes} Denominator-layout: derivative of scalar \(f\in\R\) w.r.t. vector \(w\in\R^d\) is \(\nabla_w f\in\R^{d\times1}\).
+\topic{Linear terms} \(\nabla_w(\ip{w}{x})=x\), \(\nabla_x(x^\top y)=y\), \(\nabla_x(y^\top x)=y\).
+\topic{Quadratics} \(\norm{x}_2^2=x^\top x\), \(\nabla_x\norm{x}_2^2=2x\). \(\nabla_w(w^\top A w)=(A+A^\top)w\); if \(A=A^\top\), \(2Aw\).
+\topic{Chain rule} \(\nabla_w f(g(w))=f'(g(w))\nabla_w g(w)\). Example: \(\nabla_w\sig(\ip{w}{x})=\sig(\ip{w}{x})(1-\sig(\ip{w}{x}))x\).
+\topic{Affine least squares} For \(r=Xw-y\), \(\nabla_w\frac12\norm{r}^2=X^\top r\); without \(\frac12\), multiply by \(2\). With ridge \(\frac{\lambda}{2}\norm{w}^2\), add \(\lambda w\).
+\topic{Trace tricks} \(\nabla_x(a^\top x)=a\), \(\nabla_X\operatorname{tr}(A^\top X)=A\), \(\nabla_X\frac12\norm{AX-B}_F^2=A^\top(AX-B)\). Helpful because many matrix objectives can be rewritten with traces.
+
+\section*{Linear Algebra}
+\topic{Transpose} \((AB)^\top=B^\top A^\top\). Scalar transpose equals itself: \(x^\top Ay=(x^\top Ay)^\top=y^\top A^\top x\). If \(A\) symmetric, \(x^\top Ay=y^\top Ax\).
+\topic{Inverse / rank} \((AB)^{-1}=B^{-1}A^{-1}\) when invertible. \(A^{-1}\) exists iff \(A\) is square and full rank. \(X^\top X\) is invertible iff columns of \(X\) are linearly independent; otherwise use regularization or pseudoinverse.
+\topic{\(L_p\) norms} \(\norm{x}_p=(\sum_j|x_j|^p)^{1/p}\). \(\norm{x}_2=\sqrt{x^\top x}\); \(\norm{x}_1=\sum_j|x_j|\); \(\norm{x}_\infty=\max_j|x_j|\).
+\topic{Projection} Projection of \(y\) onto \(\operatorname{col}(X)\): \(\hat y=X(X^\top X)^{-1}X^\top y=Hy\). \(H\) is symmetric/idempotent: \(H^\top=H\), \(H^2=H\). Residual \(y-\hat y\) is orthogonal to columns of \(X\): \(X^\top(y-Xw^*)=0\).
+\topic{PSD / PD} For symmetric \(A\), PSD \(A\succeq0\) means \(z^\top Az\ge0\) for all \(z\), all eigenvalues \(\ge0\). PD \(A\succ0\) means \(z^\top Az>0\) for nonzero \(z\), all eigenvalues \(>0\). Negative eigenvalue \(\Rightarrow\) not PSD. For \(2\times2\), determinant \(<0\Rightarrow\) mixed eigenvalue signs.
+\topic{Eigen facts} Symmetric \(A=Q\Lambda Q^\top\) with orthonormal eigenvectors. \(A\succeq0\Rightarrow x^\top Ax=\sum_j\lambda_j(q_j^\top x)^2\ge0\). Trace is sum of eigenvalues; determinant is product of eigenvalues.
+
+\end{multicols*}
+\end{document}
