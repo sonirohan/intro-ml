@@ -115,5 +115,39 @@ Each constraint gets a multiplier.
 \topic{PSD / PD} For symmetric \(A\), PSD \(A\succeq0\) means \(z^\top Az\ge0\) for all \(z\), all eigenvalues \(\ge0\). PD \(A\succ0\) means \(z^\top Az>0\) for nonzero \(z\), all eigenvalues \(>0\). Negative eigenvalue \(\Rightarrow\) not PSD. For \(2\times2\), determinant \(<0\Rightarrow\) mixed eigenvalue signs.
 \topic{Eigen facts} Symmetric \(A=Q\Lambda Q^\top\) with orthonormal eigenvectors. \(A\succeq0\Rightarrow x^\top Ax=\sum_j\lambda_j(q_j^\top x)^2\ge0\). Trace is sum of eigenvalues; determinant is product of eigenvalues.
 
+\section*{Choosing Models}
+\topic{Start simple} Use linear/logistic models first when you want interpretability, fast training, and a baseline. If simple model has high train and validation error, it likely underfits; add features, nonlinear mappings, or a richer model.
+\topic{Linear regression} Choose for continuous \(y\), roughly linear relationship, and squared-error objective. Weights are easy to interpret after standardizing features. Sensitive to outliers because squared loss heavily penalizes large residuals.
+\topic{Ridge vs lasso} Use ridge when many features may each contribute a little or features are correlated; it stabilizes \(X^\top X\). Use lasso when you expect only a few useful features and want sparsity/feature selection. Tune \(\lambda\): too small overfits, too large underfits.
+\topic{Logistic regression} Choose for binary classification with probabilistic output and a linear decision boundary. Good when calibrated-ish probabilities and interpretability matter. Add polynomial/features if boundary seems nonlinear; regularize if many features.
+\topic{Perceptron} Useful as a simple online linear classifier and for separability intuition. It only converges cleanly when data is linearly separable; it does not naturally output probabilities or maximize margin.
+\topic{SVM choice} Use linear SVM when classes are approximately linearly separable and margin robustness matters. Use kernel SVM when boundary is nonlinear and dataset is not too huge. Large \(C\)/small regularization fits training more tightly; small \(C\) allows more margin violations. RBF \(\gamma\) too large overfits locally; too small underfits.
+\topic{K-means choice} Use when labels are absent and you expect compact Euclidean clusters. Bad for non-spherical clusters, very different densities, categorical features without encoding, or unscaled features. Run multiple initializations and compare objective/stability.
+\topic{Metric choice} For classification, accuracy can mislead under class imbalance; also inspect precision/recall or class-specific errors. For regression, compare train/test MSE and residual patterns, not just the fitted formula.
+
+\section*{Midterm Prep Answers}
+\topic{Problem 1(a)(i)} Question: Is logistic regression prediction \(y=\sigma(w^\top x)\in[0,1]\) with decision boundary \(w^\top x\ge 0\) true or false? Answer: True. The sigmoid lies in \([0,1]\), classification thresholds at \(1/2\), and \(\sigma(t)\ge 1/2\iff t\ge 0\).
+\topic{Problem 1(a)(ii)} Question: When \(y=1\), does \(-y\log\sigma(h_w(x))-(1-y)\log(1-\sigma(h_w(x)))=\log(1+e^{h_w(x)})-h_w(x)\)? Answer: True. With \(y=1\), the loss becomes \(-\log\sigma(h_w(x))=\log(1+e^{h_w(x)})-h_w(x)\).
+\topic{Problem 1(b)(i)} Question: Is a closed-form linear-regression solution only possible when \(X^\top X\) is positive definite? Answer: False. Invertibility of \(X^\top X\) is needed for \((X^\top X)^{-1}X^\top y\), but a closed-form minimizer still exists via the Moore-Penrose pseudoinverse \(X^+y\) when \(X^\top X\) is singular.
+\topic{Problem 1(c)(i)} Question: Does regularization always lead to strictly higher empirical training loss \(J(w)\)? Answer: False. The regularized solution cannot have smaller empirical loss than the unregularized optimum, but equality can occur.
+
+\topic{Problem 2(a)} Question: Find the gradient of \(\tilde J(\theta)=\|y-X\theta\|_W^2\). Answer: \(\nabla_\theta \tilde J(\theta)=2X^\top W(X\theta-y)\).
+\topic{Problem 2(b)} Question: If \(X^\top W X\) is invertible, what is the optimum? Answer: \(\hat\theta=(X^\top W X)^{-1}X^\top Wy\). The Hessian \(2X^\top W X\) is PSD, so this stationary point is global.
+\topic{Problem 2(c)} Question: How does weighted least squares relate to ordinary least squares, and what do the weights do? Answer: It is \(\sum_i w_i(y_i-x_i^\top\theta)^2\). Larger \(w_i\) makes point \(i\) matter more; setting all \(w_i=1\) recovers ordinary least squares.
+
+\topic{Problem 3(a)} Question: Is \(k(x,x')=1/(x^\top x')\) a valid kernel? Answer: No. It is undefined when \(x^\top x'=0\), and even where defined its Gram matrix need not be PSD; for \(x_1=(1,0)^\top\), \(x_2=(1,1)^\top\), the Gram matrix has determinant \(-1/2<0\).
+\topic{Problem 3(b)} Question: Is \(k(x,x')=x^\top A x'\) valid when \(A\succ 0\)? Answer: Yes. With feature map \(\phi(x)=A^{1/2}x\), we get \(k(x,x')=\phi(x)^\top\phi(x')\).
+\topic{Problem 3(c)} Question: Is \(k(x,x')=e^{-\|x-x'\|_2^2+\ln(x^\top x')}\) on \(\R_{++}^n\) valid? Answer: Yes. It is the product of the RBF kernel and the linear kernel, so it is PSD by kernel closure properties.
+\topic{Problem 3(d)} Question: If \(k_1\) and \(k_2\) are valid kernels, is \(k_1+k_2\) valid? Answer: Yes. Concatenate the feature maps, or add the PSD Gram matrices.
+
+\topic{Problem 4(a)} Question: How does the modified soft-margin SVM compare with vanilla soft-margin SVM? Answer: The slack penalty depends on the label: positive examples use \(C_1\) and negative examples use \(C_{-1}\).
+\topic{Problem 4(b)} Question: What is the Lagrangian for the modified SVM? Answer: Add multipliers \(\alpha_i\) for \(y_i(w^\top x_i+b)\ge 1-\xi_i\) and \(\lambda_i\) for \(\xi_i\ge 0\), yielding the standard SVM Lagrangian with label-dependent slack penalties.
+\topic{Problem 4(c)} Question: What stationarity conditions do you get from the Lagrangian? Answer: \(w=\sum_i\alpha_i y_i x_i\), \(\sum_i\alpha_i y_i=0\), and \(0\le \alpha_i\le C_i\), where \(C_i=C_1\) for positives and \(C_i=C_{-1}\) for negatives.
+\topic{Problem 4(d)} Question: What is the dual objective after substitution? Answer: \(g(\alpha)=\sum_i\alpha_i-\frac12\sum_{i,j}\alpha_i\alpha_jy_iy_j(x_i^\top x_j)\).
+\topic{Problem 4(e)} Question: What is the final dual problem? Answer: Maximize \(\sum_i\alpha_i-\frac12\sum_{i,j}\alpha_i\alpha_jy_iy_j(x_i^\top x_j)\) subject to \(\sum_i\alpha_i y_i=0\) and \(0\le\alpha_i\le C_1\) for positive examples, \(0\le\alpha_i\le C_{-1}\) for negative examples.
+\topic{Problem 4(f)} Question: Is the problem kernelizable? Answer: Yes. The dual depends on the data only through inner products, so replace \(x_i^\top x_j\) by a valid kernel \(k(x_i,x_j)\).
+\topic{Problem 4(g)} Question: What happens if \(C_{-1}=0\) or \(C_1=0\)? Answer: The corresponding class has free violations, so the solution degenerates toward predicting the other class everywhere.
+\topic{Problem 4(h)} Question: Why is the formulation useful? Answer: It handles asymmetric misclassification costs and class imbalance, such as penalizing false negatives more heavily in disease detection.
+
 \end{multicols*}
 \end{document}
