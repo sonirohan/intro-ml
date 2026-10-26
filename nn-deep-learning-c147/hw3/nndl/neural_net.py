@@ -89,7 +89,9 @@ class TwoLayerNet(object):
 	#	use a for loop in your implementation.
     # ================================================================ #
 
-    pass
+    # use the dot product instead of for-loops
+    hidden = np.maximum(0, X.dot(W1.T) + b1)
+    scores = hidden.dot(W2.T) + b2
     
     # ================================================================ #
     # END YOUR CODE HERE
@@ -112,7 +114,14 @@ class TwoLayerNet(object):
 	# ================================================================ #
 
     # scores is num_examples by num_classes
-    pass
+    shifted_scores = scores - np.max(scores, axis=1, keepdims=True)
+    probs = np.exp(shifted_scores)
+    probs /= np.sum(probs, axis=1, keepdims=True)
+    loss = -np.sum(np.log(probs[np.arange(N), y])) / N
+
+    # multiplying regularization loss by 0.5 and reg
+    loss += 0.5 * reg * (np.sum(W1 ** 2) + np.sum(W2 ** 2))
+
     # ================================================================ #
     # END YOUR CODE HERE
     # ================================================================ #
@@ -127,7 +136,18 @@ class TwoLayerNet(object):
 	# 	W1, and be of the same size as W1.
 	# ================================================================ #
 
-    pass
+    dscores = probs.copy()
+    dscores[np.arange(N), y] -= 1
+    dscores /= N
+
+    hidden = np.maximum(0, X.dot(W1.T) + b1)
+    dhidden = dscores.dot(W2)
+    dhidden[hidden <= 0] = 0
+
+    grads['W2'] = dscores.T.dot(hidden) + reg * W2
+    grads['b2'] = np.sum(dscores, axis=0)
+    grads['W1'] = dhidden.T.dot(X) + reg * W1
+    grads['b1'] = np.sum(dhidden, axis=0)
 
     # ================================================================ #
     # END YOUR CODE HERE
@@ -172,7 +192,9 @@ class TwoLayerNet(object):
       # YOUR CODE HERE:
   	  # 	Create a minibatch by sampling batch_size samples randomly.
   	  # ================================================================ #
-      pass
+      batch_indices = np.random.choice(num_train, batch_size)
+      X_batch = X[batch_indices]
+      y_batch = y[batch_indices]
 
       # ================================================================ #
       # END YOUR CODE HERE
@@ -188,7 +210,8 @@ class TwoLayerNet(object):
 	  # 	all parameters (i.e., W1, W2, b1, and b2).
   	  # ================================================================ #
 
-      pass
+      for i in self.params:
+        self.params[i] -= learning_rate * grads[i]
 
       # ================================================================ #
       # END YOUR CODE HERE
@@ -235,13 +258,11 @@ class TwoLayerNet(object):
     # YOUR CODE HERE:
     # 	Predict the class given the input data.
     # ================================================================ #
-    pass
-
+    scores = self.loss(X)
+    y_pred = np.argmax(scores, axis=1) # choose the highest score
 
     # ================================================================ #
     # END YOUR CODE HERE
     # ================================================================ #
 
     return y_pred
-
-
