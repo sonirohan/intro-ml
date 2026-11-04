@@ -37,7 +37,7 @@ def affine_forward(x, w, b):
   #   assignments.
   # ================================================================ #
 
-  pass
+  out = x.reshape(x.shape[0], -1).dot(w) + b
 
   # ================================================================ #
   # END YOUR CODE HERE
@@ -46,6 +46,7 @@ def affine_forward(x, w, b):
   cache = (x, w, b)
   return out, cache
 
+
 def affine_backward(dout, cache):
   """
   Computes the backward pass for an affine layer.
@@ -53,9 +54,8 @@ def affine_backward(dout, cache):
   Inputs:
   - dout: Upstream derivative, of shape (N, M)
   - cache: Tuple of:
-    - x: A numpy array containing input data, of shape (N, d_1, ..., d_k)
-    - w: A numpy array of weights, of shape (D, M)
-    - b: A numpy array of biases, of shape (M,)
+    - x: Input data, of shape (N, d_1, ... d_k)
+    - w: Weights, of shape (D, M)
 
   Returns a tuple of:
   - dx: Gradient with respect to x, of shape (N, d1, ..., d_k)
@@ -68,14 +68,17 @@ def affine_backward(dout, cache):
   # ================================================================ #
   # YOUR CODE HERE:
   #   Calculate the gradients for the backward pass.
-  # Notice:  
-  #   dout is N x M
-  #   dx should be N x d1 x ... x dk; it relates to dout through multiplication with w, which is D x M
-  #   dw should be D x M; it relates to dout through multiplication with x, which is N x D after reshaping
-  #   db should be M; it is just the sum over dout examples
   # ================================================================ #
 
-  pass
+  # dout is N x M
+  # dx should be N x d1 x ... x dk; it relates to dout through multiplication with w, which is D x M
+  # dw should be D x M; it relates to dout through multiplication with x, which is N x D after reshaping
+  # db should be M; it is just the sum over dout examples
+
+  x_flat = x.reshape(x.shape[0], -1)
+  dx = dout.dot(w.T).reshape(x.shape)
+  dw = x_flat.T.dot(dout)
+  db = np.sum(dout, axis=0)
 
   # ================================================================ #
   # END YOUR CODE HERE
@@ -99,12 +102,14 @@ def relu_forward(x):
   #   Implement the ReLU forward pass.
   # ================================================================ #
 
+  out = np.maximum(0, x)
   # ================================================================ #
   # END YOUR CODE HERE
   # ================================================================ #
  
   cache = x
   return out, cache
+
 
 def relu_backward(dout, cache):
   """
@@ -124,6 +129,9 @@ def relu_backward(dout, cache):
   #   Implement the ReLU backward pass
   # ================================================================ #
 
+  # ReLU directs linearly to those > 0
+  dx = dout.copy()
+  dx[x <= 0] = 0
     
   # ================================================================ #
   # END YOUR CODE HERE
@@ -191,7 +199,14 @@ def batchnorm_forward(x, gamma, beta, bn_param):
     #         the 'cache' variable.
     # ================================================================ #
 
-    pass
+    sample_mean = np.mean(x, axis=0)
+    sample_var = np.var(x, axis=0)
+    x_normalized = (x - sample_mean) / np.sqrt(sample_var + eps)
+    out = gamma * x_normalized + beta
+
+    running_mean = momentum * running_mean + (1 - momentum) * sample_mean
+    running_var = momentum * running_var + (1 - momentum) * sample_var
+    cache = (x_normalized, gamma, sample_var, eps)
 
 
     # ================================================================ #
@@ -206,7 +221,8 @@ def batchnorm_forward(x, gamma, beta, bn_param):
     #   Store the output as 'out'.
     # ================================================================ #
 
-    pass
+    x_normalized = (x - running_mean) / np.sqrt(running_var + eps)
+    out = gamma * x_normalized + beta
 
     # ================================================================ #
     # END YOUR CODE HERE
@@ -244,6 +260,11 @@ def batchnorm_backward(dout, cache):
   # YOUR CODE HERE:
   #   Implement the batchnorm backward pass, calculating dx, dgamma, and dbeta.
   # ================================================================ #
+
+  x_normalized, gamma, sample_var, eps = cache
+  dbeta = np.sum(dout, axis=0)
+  dgamma = np.sum(dout * x_normalized, axis=0)
+  dx = (gamma / np.sqrt(sample_var + eps) / dout.shape[0]) * (dout.shape[0] * dout - np.sum(dout, axis=0) - x_normalized * np.sum(dout * x_normalized, axis=0))
 
   # ================================================================ #
   # END YOUR CODE HERE
@@ -284,7 +305,8 @@ def dropout_forward(x, dropout_param):
     #   Store the masked and scaled activations in out, and store the 
     #   dropout mask as the variable mask.
     # ================================================================ #
-    pass
+    mask = (np.random.rand(*x.shape) < p) / p
+    out = x * mask
     # ================================================================ #
     # END YOUR CODE HERE
     # ================================================================ #
@@ -295,7 +317,7 @@ def dropout_forward(x, dropout_param):
     # YOUR CODE HERE:
     #   Implement the inverted dropout forward pass during test time.
     # ================================================================ #
-    pass
+    out = x
     # ================================================================ #
     # END YOUR CODE HERE
     # ================================================================ #
@@ -322,7 +344,7 @@ def dropout_backward(dout, cache):
     # YOUR CODE HERE:
     #   Implement the inverted dropout backward pass during training time.
     # ================================================================ #
-    pass
+    dx = dout * mask
     # ================================================================ #
     # END YOUR CODE HERE
     # ================================================================ #
@@ -331,7 +353,7 @@ def dropout_backward(dout, cache):
     # YOUR CODE HERE:
     #   Implement the inverted dropout backward pass during test time.
     # ================================================================ #
-    pass
+    dx = dout
     # ================================================================ #
     # END YOUR CODE HERE
     # ================================================================ #

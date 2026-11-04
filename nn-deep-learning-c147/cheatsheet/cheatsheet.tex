@@ -1,0 +1,272 @@
+% ECE C147A/C247A cheat sheet -- built only from relevant-slides/ (Lectures 1-9)
+\documentclass[8pt,landscape]{extarticle}
+\usepackage[letterpaper,margin=0.25in]{geometry}
+\usepackage{amsmath,amssymb,bm}
+\usepackage{multicol}
+\usepackage{enumitem}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{titlesec}
+\usepackage{graphicx}
+
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1.2pt}
+\setlength{\columnsep}{9pt}
+\setlength{\columnseprule}{0.3pt}
+\setlength{\abovedisplayskip}{1.5pt}
+\setlength{\belowdisplayskip}{1.5pt}
+\setlength{\abovedisplayshortskip}{0pt}
+\setlength{\belowdisplayshortskip}{1pt}
+\setlist{nosep,leftmargin=8pt,labelsep=2pt}
+\setlist[itemize]{label=\textbullet}
+
+\newcommand{\sechead}[1]{\colorbox{MidnightBlue}{\parbox{\dimexpr\columnwidth-2\fboxsep}{#1}}}
+\titleformat{\section}[block]{\normalsize\bfseries\color{white}}{}{0pt}{\sechead}
+\titlespacing*{\section}{0pt}{3pt}{1pt}
+\titleformat{\subsection}{\small\bfseries\color{MidnightBlue}}{}{0pt}{}
+\titlespacing*{\subsection}{0pt}{2pt}{0.5pt}
+
+\newcommand{\x}{\mathbf{x}}
+\newcommand{\y}{\mathbf{y}}
+\newcommand{\z}{\mathbf{z}}
+\newcommand{\h}{\mathbf{h}}
+\newcommand{\bb}{\mathbf{b}}
+\newcommand{\W}{\mathbf{W}}
+\newcommand{\w}{\mathbf{w}}
+\newcommand{\X}{\mathbf{X}}
+\newcommand{\A}{\mathbf{A}}
+\newcommand{\g}{\mathbf{g}}
+\newcommand{\vv}{\mathbf{v}}
+\newcommand{\bI}{\mathbb{I}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\pd}[2]{\frac{\partial #1}{\partial #2}}
+\newcommand{\key}[1]{\textbf{\color{BrickRed}#1}}
+
+\begin{document}
+\fontsize{8.6}{9.8}\selectfont\raggedright
+\raggedcolumns
+\begin{multicols*}{4}
+
+\section{Supervised Learning Setup}
+Dataset $\mathcal{D}=\{(\x^{(1)},y^{(1)}),\dots,(\x^{(N)},y^{(N)})\}$; goal: learn $f$ s.t.\ $\hat y=f(\x)\approx y$ on \emph{unseen} data.
+
+\textbf{Regression}: $y\in\R$ (continuous). \textbf{Classification}: $y\in\{1,\dots,c\}$.
+CIFAR-10: 60k imgs, $32{\times}32{\times}3$ (reshape $\to 3072$-dim vector), 10 classes, 6k/class; 50k train / 10k test.
+
+\section{Linear / Least Squares Regression}
+Model: $\hat y = ax+b=\theta^T\hat\x$, $\theta=[a,b]^T$, $\hat\x=[x,1]^T$.
+Polynomial: $\theta=[b,a_1,\dots,a_n]^T$, $\hat\x=[1,x,x^2,\dots,x^n]^T$ (same notation, still linear in $\theta$).
+Loss ($N$ = normalization const):
+\begin{align*}\mathcal{L}(\theta)&=\tfrac{1}{2N}\textstyle\sum_{i=1}^N\big(y^{(i)}-\theta^T\hat\x^{(i)}\big)^2\\&=\tfrac{1}{2N}(\y-\X\theta)^T(\y-\X\theta)\end{align*}
+$\X\in\R^{N\times n}$ rows $\hat\x^{(i)T}$. Expand: $\tfrac1{2N}(\y^T\y-2\y^T\X\theta+\theta^T\X^T\X\theta)$.
+\[\pd{\mathcal L}{\theta}=\tfrac1{2N}(-2\X^T\y+2\X^T\X\theta)=0\]
+\[\boxed{\X^T\X\theta=\X^T\y\ \Rightarrow\ \theta=(\X^T\X)^{-1}\X^T\y}\]
+Higher-degree poly always fits \emph{train} data at least as well (zero extra coeffs), but may not generalize.
+
+\section{Vector/Matrix Derivatives}
+\textbf{Denominator layout} (used in class): $\nabla_\x y$ has \emph{same shape as} $\x$.
+$y\in\R$, $\x\in\R^n$: $\nabla_\x y=\big[\pd{y}{x_1},\dots,\pd{y}{x_n}\big]^T$.
+$\Delta y\approx\sum_i\pd{y}{x_i}\Delta x_i=(\nabla_\x y)^T\Delta\x$.
+\begin{itemize}
+\item $\nabla_\x(\theta^T\x)=\theta$,\quad $\nabla_\theta(\theta^T\x)=\x$
+\item $\nabla_\x(\x^T\A\x)=(\A+\A^T)\x$;\ $=2\A\x$ if $\A=\A^T$
+\item $\nabla_\x(\W\x)=\W^T$ ($\W\in\R^{h\times n}$)
+\item $\nabla_\A y\in\R^{m\times n}$ for $\A\in\R^{m\times n}$, $(i,j)$ entry $\partial y/\partial a_{ij}$. E.g.\ $y=\z^T\A\x\Rightarrow\nabla_\A y=\z\x^T$
+\item Facts: $(\A\mathbf{B}\mathbf{C})^T=\mathbf{C}^T\mathbf{B}^T\A^T$; $s^T=s$ for scalar
+\end{itemize}
+
+\textbf{Jacobian}: $\y\in\R^n,\x\in\R^m$: $\Delta\y\approx\mathbf{J}\Delta\x$, $\mathbf{J}\in\R^{n\times m}$, $J_{ij}=\pd{y_i}{x_j}$.
+Denominator layout: $\nabla_\x\y=\pd{\y}{\x}\in\R^{m\times n}=\mathbf{J}^T$.
+
+\textbf{Hessian}: $\mathbf{H}=\nabla_\x(\nabla_\x f)=\nabla^2_\x f$, $H_{ij}=\frac{\partial^2 f}{\partial x_i\partial x_j}$.
+
+\section{Generalization}
+\textbf{Overfit}: low train err, high test err (too complex). \textbf{Underfit}: high train err (too simple, e.g.\ linear for nonlinear data). More data $\Rightarrow$ can fit more complex models w/o overfitting.
+Assumption: test data from \emph{same distribution} as train; else ``out-of-distribution.''
+Over/underfit $\leftrightarrow$ \emph{bias/variance} of param.\ estimate.
+
+\textbf{Train} (learn params) / \textbf{Validation} (tune hyperparams) / \textbf{Test} (score once; untouched during model discovery).
+
+\textbf{$k$-fold CV}: split train data into $k$ folds; train on $k{-}1$, validate on 1; rotate, average val. err.\ $\to$ pick hyperparams $\to$ retrain on all folds $\to$ evaluate once on test. E.g.\ CIFAR: 10k test; 50k$\to$5 folds of 10k (40k train/10k val). For NNs often just one val set (cost).
+Tiny data: model selection (BIC, AIC, DIC) penalizes complexity.
+
+\section{Image Classification \& $k$-NN}
+Challenges: viewpoint, zoom, illumination, deformation, occlusion, background clutter, intraclass variation. Data-driven: learn features.
+
+\textbf{$k$-NN}: find the $k$ closest training pts (under a metric); majority vote. ``Training'' = store data.
+Hyperparams: distance metric, $k$. Larger $k$ smooths outliers.
+Pros: simple, no training. Cons: memory (keep all data), slow inference, curse of dim.\ (volume grows exponentially $\to$ neighbors not near); hard to pick metric (boxed/shifted/tinted imgs: equal $L_2$ dist.).
+Cover--Hart: $\text{ERR}_{\text{NN}}\le 2\,\text{ERR}_{\text{opt}}+\frac{2c\sqrt d}{N^{1/d}}$ (slow decay in $N$).
+
+\section{Linear Classifier}
+$\W=[\w_1^T;\dots;\w_c^T]\in\R^{c\times n}$, $\z=\W\x+\bb\in\R^c$ (scores), predict $k=\arg\max_j z_j$.
+Each row $\w_i$ = class \emph{template}; $\w_i^T\x=\|\w_i\|\|\x\|\cos\theta_i$ large when $\w_i$ nearly colinear with $\x$.
+Boundary (2 classes, no bias): $(\w_1-\w_2)^T\x=0$; class 1 if $(\w_1-\w_2)^T\x\ge0$.
+Fails when data not linearly separable (e.g.\ concentric rings) $\to$ change of variables (polar coords) / NN learns the representation.
+
+\section{Maximum Likelihood}
+Choose $\theta$ maximizing $P(\mathcal D|\theta)$.
+Coin: $\mathcal L(\theta)=\theta^{n_H}(1-\theta)^{n_T}$; $\log\mathcal L=n_H\log\theta+n_T\log(1-\theta)$; $\pd{}{\theta}=0\Rightarrow\theta^*=\frac{n_H}{n_H+n_T}$. $\arg\max\mathcal L=\arg\max\log\mathcal L$ ($\log$ monotone).
+Chain rule: $p(a,b)=p(a)p(b|a)$; $p(a,b,c)=p(a)p(b|a)p(c|a,b)$; $p(b,c|d,e)=\frac{p(b,c,d,e)}{p(d,e)}$.
+i.i.d.: $P(\mathcal D|\theta)=\prod_i p(\x^{(i)}|\theta)\,p(y^{(i)}|\x^{(i)},\theta)$; $p(\x|\theta)$ indep.\ of $\theta$ $\Rightarrow$ $\arg\max_\theta\sum_i\log p(y^{(i)}|\x^{(i)},\theta)$.
+
+\section{Softmax Classifier}
+$a_i(\x)=\w_i^T\x+b_i$, $\theta=\{\w_j,b_j\}_{j=1}^c$:
+\[\text{softmax}_i(\x)=\frac{e^{a_i(\x)}}{\sum_{j=1}^c e^{a_j(\x)}}\in[0,1],\ \textstyle\sum_i=1\]
+$\Pr(y^{(i)}=j|\x^{(i)},\theta)=\text{softmax}_j(\x^{(i)})$.
+
+\textbf{Loss} (neg.\ log-likelihood = cross-entropy):
+\begin{align*}J(\theta)&=\tfrac1m\textstyle\sum_{i=1}^m\Big(\log\sum_{j=1}^c e^{a_j(\x^{(i)})}\\&\qquad\qquad-a_{y^{(i)}}(\x^{(i)})\Big)\\
+&=-\textstyle\sum_{i}\sum_{j} z^{(i)}_j\log p^{(i)}_j\end{align*}
+where $p^{(i)}_j=\Pr(y^{(i)}{=}j|\x^{(i)},\theta)$.
+$\z^{(i)}$ one-hot: $z_j^{(i)}=1$ iff $j=y^{(i)}$ (only correct-class term survives).
+$\log\Pr(y^{(i)}|\x)=a_{y^{(i)}}-\log\sum_j e^{a_j}\approx a_{y^{(i)}}-\max_j a_j$: ${\approx}0$ if correct class wins, else $<0$.
+
+\textbf{Overflow}: $e^{a_i}$ huge. Multiply num/denom by $k$: $\frac{e^{a_i+\log k}}{\sum_j e^{a_j+\log k}}$, $\log k=-\max_j a_j(\x)$ (max exponent $=0$).
+
+\section{Gradient Descent}
+Taylor: $f(\x+\Delta\x)\approx f(\x)+\Delta\x^T\nabla_\x f(\x)$. Directional deriv.\ along unit $\mathbf u$: $\mathbf u^T\nabla_\x f$.
+$\min_{\|\mathbf u\|=1}\mathbf u^T\nabla f=\min\|\nabla f\|\cos\alpha$ $\Rightarrow$ $\mathbf u=-\nabla f$ ($\cos\alpha=-1$).
+\[\boxed{\x\leftarrow\x-\epsilon\nabla_\x f(\x)}\quad\epsilon=\text{learning rate}\]
+\textbf{Terms}: global min $f(\x)\ge f(\x_g)\,\forall\x$; local min = critical pt lower than neighbors; saddle = critical pt, neither max nor min ($f'=0$ at all). NN losses non-convex; local minima empirically good.
+
+\textbf{Step size}: too large $\to$ Taylor approx invalid, diverge/bounce; too small $\to$ slow. LR schedule/annealing: start large, decay when loss plateaus. Line search too costly in high dim.
+
+\textbf{Numerical grad} $\frac{f(x+h)-f(x)}{h}$: OK for small models (grad check), too expensive for large.
+
+\textbf{Batch}: all $m$ examples. \textbf{Minibatch}: $k$ examples ($m>k>1$, e.g.\ 32/64/128). \textbf{Stochastic}: $k=1$.
+$\nabla_\theta\mathcal L=\frac1N\sum_i\nabla_\theta\ell(\x^{(i)},y^{(i)})\approx\E_{\x,y}[\nabla_\theta\ell]$; each sample = noisy grad estimate. SGD noise can kick out of bad local minima; implicit regularization.
+
+\section{Neural Networks}
+Neuron: $f(\sum_i w_ix_i+b)$ (synaptic weights $\to$ hillock integrate+threshold $\to$ axon). Real neurons spike (all-or-nothing, probabilistic); NNs encode the \emph{rate}.
+
+\textbf{MLP / feedforward}: $\h_1=f(\W_1\x+\bb_1)$, $\h_2=f(\W_2\h_1+\bb_2)$, \dots, $\z=\W_N\h_{N-1}+\bb_N$ (no activation on output; scores go to softmax/SVM). $f$ applied elementwise.
+
+\textbf{Param count}: $3\to4\to2$: $3{\cdot}4+4{\cdot}2=20$ W, $4{+}2=6$ b $=26$. $3\to4\to4\to2$: $12+16+8=36$ W $+10$ b $=46$. (\#neurons excludes input.)
+Universal approx.: 2-layer MLP w/ enough neurons approximates any function.
+
+\textbf{Linear $f$}: collapses to $\z=\W\x+\bb$, $\W=\W_N\cdots\W_1$, $\bb=\bb_N+\W_N\bb_{N-1}+\dots+\W_N\cdots\W_2\bb_1$. Useful only for low-rank rep.\ (autoencoder, $\dim\h\ll\dim\x$, $\mathcal L=\|\x-\hat\x\|^2$, ${\sim}$SVD).
+Nonlinear hidden layers = learned features making data linearly separable for last layer.
+\textbf{XOR}: linear LS fit fails ($w_1{=}w_2{=}w$, $b=\frac{1-3w}{2}$). Works with $g(\x)=\w^T\max(0,\W^T\x+\mathbf c)+b$, $\W=\begin{bmatrix}1&1\\1&1\end{bmatrix}$, $\mathbf c=[0,-1]^T$, $\w=[1,-2]^T$, $b=0$.
+
+\section{Activation Functions}
+{\raggedright Principle: gradient must be ``large and predictable enough'' to guide learning.\par}
+\resizebox{\columnwidth}{!}{\begin{tabular}{@{}l@{\ }l@{}}
+\textbf{Sigmoid} & $\sigma(x)=\frac1{1+e^{-x}}$, $\sigma'=\sigma(1-\sigma)$\\
+\textbf{tanh} & $2\sigma(2x)-1$, $\tanh'=1-\tanh^2$\\
+\textbf{ReLU} & $\max(0,x)$, $'=\bI(x>0)$\\
+\textbf{Softplus} & $\zeta(x)=\log(1+e^x)$, $\zeta'=\sigma(x)$\\
+\textbf{Leaky/PReLU} & $\max(\alpha x,x)$, $\alpha\ll1$ (0.01)\\
+\textbf{ELU} & $\max(\alpha(e^x-1),x)$\\
+\textbf{Swish} & $x\,\sigma(\beta x)$\\
+\textbf{GELU} & $x\Phi(x)=\frac x2[1+\text{erf}(x/\sqrt2)]$
+\end{tabular}}\par
+
+\textbf{Sigmoid}: +linear near 0, differentiable. $-$saturates (zero grad at extremes); not zero-centered (outputs ${\sim}0.5$): for $f=\sigma(\w^T\h+b)$, $\pd f\w=\sigma(1-\sigma)\h$; if $\h\ge0$ all grad entries share sign $\to$ zig-zag. Rarely used.
+
+\textbf{tanh}: zero-centered (fixes zig-zag) but still saturates.
+
+\textbf{ReLU}: converges faster (AlexNet ${\sim}6\times$ vs tanh), no saturation for $x>0$, large grads. $-$not zero-centered, not diff.\ at 0 (use 0 or 1; subgradient $\in[0,1]$), no learning when activation $=0$ (dead units) $\to$ leaky ReLU/maxout.
+Softplus: smooth but empirically worse than ReLU. PReLU: $\alpha$ learned. ELU: needs costly exp.
+
+\textbf{Practice}: ReLU popular; sigmoid almost never (tanh preferred); try leaky ReLU/PReLU/ELU/maxout.
+
+\section{Output Activation $\leftrightarrow$ Cost}
+Binary, $\hat y=\sigma(z)$, $y\in\{0,1\}$:
+$\text{MSE}=\frac12\sum_i(y^{(i)}-\sigma(z^{(i)}))^2$;\ $\text{CE}=-\sum_i[y\log\sigma(z)+(1-y)\log(1-\sigma(z))]$.
+$y=1$: $\pd{\text{MSE}}{z}=-(y-\sigma(z))\,\sigma(z)(1-\sigma(z))\to0$ when $z\ll0$ (very wrong yet \emph{no learning}).
+$\pd{\text{CE}}{z}=\sigma(z)-1\approx-1$ when $z\ll0$ (learns); stalls only near right answer. $\Rightarrow$ CE well matched to $\sigma$. Choose loss \& nonlinearity jointly by looking at the gradient.
+
+\section{Backpropagation}
+Repeated chain rule on a computational graph; cache forward values.
+
+\textbf{Forward}: compute node values. \textbf{Backward}: downstream grad = local grad $\times$ upstream grad: $\pd{\mathcal L}{x}=\pd{f}{x}\pd{\mathcal L}{f}$.
+
+\textbf{Gates}: \textbf{add} distributes ($\pd{\mathcal L}{x}=\pd{\mathcal L}{y}=\pd{\mathcal L}{f}$); \textbf{mult} switches ($\pd{\mathcal L}{x}=y\pd{\mathcal L}{f}$, $\pd{\mathcal L}{y}=x\pd{\mathcal L}{f}$); \textbf{max} routes ($\bI(x>y)\pd{\mathcal L}{f}$, $\bI(y\ge x)\pd{\mathcal L}{f}$).
+
+\textbf{Paths converge}: sum. $\pd{\mathcal L}{x}=\sum_i\pd{q_i}{x}\pd{\mathcal L}{q_i}$.
+
+\textbf{Ex.} $f=(x+y)z$, $x{=}2,y{=}3,z{=}4$: $w{=}5$, $f{=}20$; $\pd fz=w=5$, $\pd fw=z=4$, $\pd fx=\pd fy=4$.
+
+\textbf{Ex.} $f=\frac{1}{1+e^{-(w_0x_0+w_1x_1+w_2)}}$, $w_0{=}1,x_0{=}{-1},w_1{=}2,x_1{=}2,w_2{=}{-2}$: fwd $-1,4\to3\to1\to-1\to0.37\to1.37\to0.73$. Back: inv ($-1/z^2$) $-0.53$; $+1$: $-0.53$; exp: $-0.20$; $\times(-1)$: $0.20$; adds pass $0.20$. $\pd f{w_0}=-0.20$, $\pd f{x_0}=0.20$, $\pd f{w_1}=0.40$, $\pd f{x_1}=0.40$, $\pd f{w_2}=0.20$. (Shortcut: $\sigma'=\sigma(1-\sigma)=0.73\cdot0.27\approx0.20$.)
+
+\textbf{Softplus}: $b=e^x$, $a=1+b$, $y=\log a$: $\frac{dy}{da}=\frac1a$, $\frac{dy}{dx}=e^x\frac1a$.
+
+\subsection{Vector chain rule}
+Scalar: $\frac{dz}{dx}=\frac{dz}{dy}\frac{dy}{dx}$. Vector: $\x\in\R^m,\y=f(\x)\in\R^n,\z=g(\y)\in\R^p$:
+\[\nabla_\x\z=\nabla_\x\y\,\nabla_\y\z,\quad \pd{\z}{\x}=\pd{\y}{\x}\pd{\z}{\y}\]
+$(m{\times}p)=(m{\times}n)(n{\times}p)$. \key{Order matters}: right-to-left in denominator layout; check dims. (From $\Delta\z\approx(\nabla_\y\z)^T(\nabla_\x\y)^T\Delta\x$.)
+
+\textbf{Tensor derivs} ($\partial\y/\partial\W$: vector w.r.t.\ matrix is a 3-D tensor; not tested). Avoid by differentiating the scalar loss directly:
+\[\y=\W\x:\quad \pd{\mathcal L}{\x}=\W^T\pd{\mathcal L}{\y},\quad \pd{\mathcal L}{\W}=\pd{\mathcal L}{\y}\x^T\]
+
+\subsection{NN layer backprop}
+$\h=\text{ReLU}(\W\x+\bb)$, $\ell=\|\h-\z\|^2$; $\mathbf c=\W\x$, $\mathbf a=\mathbf c+\bb$. $\nabla_\h\ell=2(\h-\z)$.
+\[\pd\ell{\mathbf a}=\bI(\mathbf a>0)\odot\pd\ell\h,\ \ \pd\ell{\mathbf c}=\pd\ell\bb=\pd\ell{\mathbf a}\]
+\[\pd\ell\x=\W^T\pd\ell{\mathbf c},\quad \pd\ell\W=\pd\ell{\mathbf c}\,\x^T\]
+$\odot$ = Hadamard (elementwise). Naive GD on NNs performs poorly $\to$ need init, normalization, regularization, better optimizers.
+
+\section{Weight Initialization}
+\textbf{Small} (e.g.\ $0.01\cdot\mathcal N(0,1)$): activations decay to 0 through layers $\Rightarrow$ $\pd{\mathcal L}{\W}=\pd{\mathcal L}{\z}\h^T\approx0$, no learning. OK for shallow nets.
+
+\textbf{Large} ($\mathcal N(0,1)$): activations explode (ReLU) / saturate at $\pm1$ (tanh) $\Rightarrow$ noisy/vanishing grads.
+\textbf{Xavier} (Glorot \& Bengio): keep $\text{var}(h_i)=\text{var}(h_j)$ and $\text{var}(\nabla_{h_i}J)=\text{var}(\nabla_{h_j}J)$ across layers. Linear units $h_i=\sum_{j=1}^{n_{\text{in}}}w_{ij}h_{i-1,j}$; $w,h$ indep., zero mean:
+\begin{align*}\text{var}(wh)&=\E^2(w)\text{var}(h)+\E^2(h)\text{var}(w)\\&\quad+\text{var}(w)\text{var}(h)\end{align*}
+$\Rightarrow\text{var}(h_i)=\text{var}(h_{i-1})\sum_j\text{var}(w_{ij})\Rightarrow\text{var}(w)=\frac1{n_{\text{in}}}$. Backward: $\frac1{n_{\text{out}}}$. Compromise:
+\[\text{var}(w_{ij})=\tfrac{2}{n_{\text{in}}+n_{\text{out}}},\quad w\sim\mathcal N\!\big(0,\tfrac{2}{n_{\text{in}}+n_{\text{out}}}\big)\]
+or $U\big(\pm\sqrt{6/(n_{\text{in}}+n_{\text{out}})}\big)$. Good for tanh; with ReLU $\to$ dying units.
+
+\textbf{He/MSRA} (ReLU): $\text{var}(w)=\frac{2}{n_{\text{in}}}$ (ReLU kills half the units, halving variance). Code: \texttt{randn(..)*sqrt(2)/sqrt(n\_in)}.
+A factor of 2 can decide learning vs.\ not.
+
+\section{Batch Normalization}
+(Ioffe \& Szegedy 2015) Motivated by internal covariate shift (newer view: smoother loss surface). Per unit $i$, minibatch size $m$:
+\[\mu_i=\tfrac1m\textstyle\sum_j x_i^{(j)},\ \ \sigma_i^2=\tfrac1m\sum_j(x_i^{(j)}-\mu_i)^2\]
+\[\hat x_i=\frac{x_i-\mu_i}{\sqrt{\sigma_i^2+\varepsilon}},\qquad y_i=\gamma_i\hat x_i+\beta_i\]
+$\gamma,\beta$ learned; can undo BN ($\gamma_i=\sigma_i,\beta_i=\mu_i$). Per-unit (not full $\Sigma^{-1/2}$) for computational efficiency. Part of graph $\to$ backprop through it.
+
+\textbf{Backprop} (drop $i$):
+\begin{gather*}\pd\ell\beta=\textstyle\sum_j\pd\ell{y^{(j)}},\quad \pd\ell\gamma=\sum_j\pd\ell{y^{(j)}}\hat x^{(j)}\\ \pd\ell{\hat x^{(j)}}=\gamma\pd\ell{y^{(j)}}\\
+\pd\ell{\sigma^2}=\textstyle\sum_j-\frac12\frac{(x^{(j)}-\mu)}{(\sigma^2+\varepsilon)^{3/2}}\pd\ell{\hat x^{(j)}}\\
+\pd\ell\mu=-\frac{1}{\sqrt{\sigma^2+\varepsilon}}\textstyle\sum_j\pd\ell{\hat x^{(j)}}\\ -\frac2m\sum_j(x^{(j)}-\mu)\pd\ell{\sigma^2}\\
+\pd\ell{x^{(j)}}=\frac{1}{\sqrt{\sigma^2+\varepsilon}}\pd\ell{\hat x^{(j)}}\\ +\frac{2(x^{(j)}-\mu)}{m}\pd\ell{\sigma^2}+\frac1m\pd\ell\mu\end{gather*}
+Placement: $\h_i=f(\text{BN}(\W_i\h_{i-1}+\bb_i))$ (before nonlinearity). \textbf{Test time}: use running avg of mean/var over seen inputs (forgetting factor $\mu_t=\sum_j\alpha^{t-j}x^{(j)}$). Allows higher LRs.
+
+\section{Regularization}
+``Any modification \dots\ intended to reduce generalization error but not training error.'' Increases bias, reduces variance; prevents overfitting; lets you use a big model regularized.
+
+\textbf{Early stopping}: return model w/ lowest val.\ error; \#steps is a hyperparam; no change to model/cost.
+
+\textbf{Norm penalty}: $\tilde J=J(\theta;\X,\y)+\alpha\Omega(\theta)$, $\alpha\ge0$ ($0$: none; $\infty$: just min $\Omega$).
+
+\textbf{$L^2$} (ridge/Tikhonov/weight decay): $\Omega=\frac12\w^T\w$.
+$\nabla_\w\tilde J=\alpha\w+\nabla_\w J$;\ \ $\w\leftarrow(1-\epsilon\alpha)\w-\epsilon\nabla_\w J$ (shrink, then step).
+(Not tested: MAP w/ $\w\sim\mathcal N(0,\frac1\alpha\mathbf I)$; LS becomes $\w=(\X^T\X+\alpha\mathbf I)^{-1}\X^T\y$.)
+Variants: $\|\w-\bb\|_2$ (near prior value), $\|\w^{(1)}-\w^{(2)}\|_2$ (tie params).
+
+\textbf{$L^1$}: $\Omega=\|\w\|_1=\sum_i|w_i|$; subgrad $\text{sign}(\w)$ (size-independent) $\Rightarrow$ \emph{sparse} $\w$ (feature selection). MAP w/ $w_i\sim\text{Laplace}(0,\frac1\alpha)$. Sparse reps: $\Omega(\h^{(i)})=\|\h^{(i)}\|_1$.
+
+\textbf{Data aug.}\ (encodes invariances): flip, crop, brightness, lens corr., rotate; noise injection, label smoothing.
+
+\textbf{Multitask}: shared layers + task-specific heads (shared factors). \textbf{Transfer}: reuse layers from another task (fixed), train a few task layers.
+
+\textbf{Ensembles}: train several models, average at test (few \% gain). \textbf{Bagging}: $k$ datasets resampled w/ replacement. Cheap: snapshots at different local minima.
+
+\section{Dropout}
+Each iter., drop each unit independently: \texttt{M=(rand(*H.shape)<p); H*=M}.
+
+\textbf{Test}: weight scaling inference rule --- $h_{\text{out}}=\text{relu}(p\sum_iw_ih_i)=p\,\text{relu}(\sum w_ih_i)$; class scales activations by $p$.
+
+\textbf{Inverted dropout}: scale by $1/p$ in training (\texttt{M=(rand<p)/p}) $\Rightarrow$ same expected value; test unchanged. No extra test cost (vs.\ $O(m)$ for $m$-model ensemble).
+Why: ${\approx}$bagging ($2^N$ sub-models, $N$ units); units work in many contexts; redundant features.
+
+\section{SGD \& Momentum}
+\textbf{SGD}: LR $\varepsilon$, init $\theta$, minibatch $m$; until stop: sample $\{\x^{(i)},\y^{(i)}\}_{i=1}^m$,
+\[\boxed{\g=\tfrac1m\textstyle\sum_{i=1}^m\nabla_\theta J(\theta),\quad \theta\leftarrow\theta-\varepsilon\g}\]
+\textbf{Momentum}: running mean of grads. $\vv=0$, $\alpha\in[0,1]$ (0.9/0.99):
+\[\boxed{\vv\leftarrow\alpha\vv-\varepsilon\g,\quad \theta\leftarrow\theta+\vv}\]
+$\vv_1=-\varepsilon\g_1$, $\vv_3=-\varepsilon[\alpha^2\g_1+\alpha\g_2+\g_3]$. Averages away zig-zag on high-curvature tilted surfaces; can push to a different (local) minimum.
+
+\end{multicols*}
+\end{document}
